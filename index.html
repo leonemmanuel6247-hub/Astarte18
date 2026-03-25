@@ -5,26 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>SuccessPolaris - Astarté | Assistant Éducatif</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
             background: linear-gradient(145deg, #0A0F1E 0%, #0C1222 50%, #0A0F1E 100%);
             position: relative;
         }
-
-        /* Effet de grille bleue */
         body::before {
             content: "";
             position: fixed;
@@ -38,8 +25,6 @@
             pointer-events: none;
             z-index: 0;
         }
-
-        /* Étoiles */
         body::after {
             content: "";
             position: fixed;
@@ -71,7 +56,6 @@
             z-index: 2;
         }
 
-        /* HEADER */
         .chat-header {
             background: linear-gradient(135deg, rgba(10, 15, 30, 0.95) 0%, rgba(0, 20, 40, 0.95) 100%);
             border-bottom: 1px solid rgba(0, 255, 255, 0.4);
@@ -110,7 +94,6 @@
         .ai-name { font-size: 1.1rem; font-weight: 600; color: #00FFFF; text-shadow: 0 0 5px rgba(0,255,255,0.3); }
         .ai-title { font-size: 0.7rem; color: rgba(0, 255, 255, 0.7); }
 
-        /* ZONE DE MESSAGES */
         .chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -132,6 +115,7 @@
             line-height: 1.5;
             font-size: 0.95rem;
             word-break: break-word;
+            white-space: pre-wrap;
         }
         .message.user .message-content {
             background: linear-gradient(135deg, #00FFFF 0%, #0099FF 100%);
@@ -148,7 +132,6 @@
         }
         .message-info { font-size: 0.6rem; margin-top: 4px; color: #00FFFF; opacity: 0.8; }
 
-        /* RÉSULTATS DE DOCUMENTS */
         .doc-result {
             background: rgba(0, 255, 255, 0.05);
             border-left: 3px solid #00FFFF;
@@ -187,7 +170,6 @@
         }
         .doc-link:hover { transform: scale(1.02); box-shadow: 0 2px 8px rgba(0, 255, 255, 0.4); }
 
-        /* INDICATEUR DE SAISIE */
         .typing-indicator {
             display: flex;
             gap: 6px;
@@ -210,7 +192,6 @@
         @keyframes bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-8px); opacity: 1; } }
         @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ZONE DE SAISIE */
         .chat-input-area {
             padding: 16px 24px;
             background: rgba(10, 15, 30, 0.95);
@@ -245,8 +226,6 @@
         }
         .send-button:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3); }
         .send-button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* FOOTER */
         .footer-note {
             text-align: center;
             font-size: 0.6rem;
@@ -256,8 +235,6 @@
             border-top: 1px solid rgba(0, 255, 255, 0.15);
             flex-shrink: 0;
         }
-
-        /* SCROLLBAR */
         .chat-messages::-webkit-scrollbar { width: 4px; }
         .chat-messages::-webkit-scrollbar-track { background: rgba(0, 255, 255, 0.05); border-radius: 10px; }
         .chat-messages::-webkit-scrollbar-thumb { background: #00FFFF; border-radius: 10px; box-shadow: 0 0 3px #00FFFF; }
@@ -300,7 +277,7 @@
     </div>
 
     <div class="chat-input-area">
-        <input type="text" class="chat-input" id="messageInput" placeholder="Ex: 'Merlin Maths', 'mathématiques', 'cours physique terminale'" onkeypress="if(event.key === 'Enter') sendMessage()">
+        <input type="text" class="chat-input" id="messageInput" placeholder="Ex: 'Merlin Maths', 'mathématiques terminale', 'cours physique'" onkeypress="if(event.key === 'Enter') sendMessage()">
         <button class="send-button" id="sendButton" onclick="sendMessage()">Envoyer</button>
     </div>
     <div class="footer-note">
@@ -310,7 +287,7 @@
 
 <script>
     // ============================================================
-    // CONFIGURATION - NOUVELLE URL APPS SCRIPT
+    // CONFIGURATION
     // ============================================================
     const API_URL = "https://script.google.com/macros/s/AKfycbxnDlqG4Ww6AILiofRrqAtPS9mi8AIvt--Huhme3HzXxS1YxRveaa6xgR-afYt9HRzY/exec";
     
@@ -319,43 +296,51 @@
     let isProcessing = false;
     let conversationHistory = [];
     
-    // Matières et mots-clés pour la recherche
+    // Matières et mots-clés
     const MATIERES = {
         "mathématiques": ["math", "maths", "algèbre", "géométrie", "calcul", "dérivée", "intégrale", "équation", "fonction", "trigonométrie", "probabilité", "statistique", "merlin"],
         "physique": ["physique", "mécanique", "électricité", "optique", "thermodynamique", "pc", "force", "énergie", "mouvement", "cinématique", "dynamique"],
-        "chimie": ["chimie", "réaction", "molécule", "atome", "tableau périodique", "acide", "base", "oxydoréduction"],
-        "français": ["français", "littérature", "grammaire", "orthographe", "rédaction", "poésie", "dissertation", "commentaire"],
-        "histoire": ["histoire", "géographie", "hg", "civilisation", "chronologie", "guerre"],
-        "anglais": ["anglais", "english", "vocabulaire", "grammaire anglaise"],
-        "svt": ["svt", "biologie", "géologie", "sciences", "cellule", "évolution", "écosystème", "génétique"],
-        "philosophie": ["philosophie", "philo", "dissertation", "auteur", "pensée", "raison"]
+        "chimie": ["chimie", "réaction", "molécule", "atome", "tableau périodique", "acide", "base"],
+        "français": ["français", "littérature", "grammaire", "orthographe", "rédaction", "poésie"],
+        "histoire": ["histoire", "géographie", "hg"],
+        "anglais": ["anglais", "english"],
+        "svt": ["svt", "biologie", "géologie", "sciences", "cellule", "évolution"],
+        "philosophie": ["philosophie", "philo", "dissertation", "auteur", "pensée"]
     };
     
     const NIVEAUX = ["terminale", "première", "seconde", "bac", "tle", "1ère", "2nde", "collège", "lycée", "supérieur", "licence", "master"];
-    
     const MOTS_RECHERCHE_DOC = ["où", "trouver", "document", "fichier", "livre", "cours", "exercice", "pdf", "drive", "lien", "accès", "bibliothèque", "ressource", "merlin", "aurore"];
     const STOP_WORDS = ["je", "tu", "il", "elle", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "pour", "par", "sur", "dans", "avec", "sans", "ou", "et", "donc", "or", "ni", "car", "veux", "cherche", "moi", "toi"];
     
-    // ============================================================
-    // APIS PÉDAGOGIQUES (Groq + Fireworks)
-    // ============================================================
+    // APIs pédagogiques
     const PROVIDERS = [
         { name: "Groq", url: "https://api.groq.com/openai/v1/chat/completions", model: "llama-3.3-70b-versatile", key: "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" },
         { name: "Fireworks", url: "https://api.fireworks.ai/inference/v1/chat/completions", model: "accounts/fireworks/models/llama-v3p3-70b-instruct", key: "fw_Rq3HAAzaQ39PFVSMRykAnN" }
     ];
     
     // ============================================================
-    // FONCTIONS UI
+    // FONCTIONS UI - AFFICHAGE PROPRE
     // ============================================================
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m);
     }
     
+    // Formater le texte pour une meilleure lisibilité
+    function formaterTexte(text) {
+        if (!text) return '';
+        // Remplacer les retours à la ligne par <br>
+        let formatted = text.replace(/\n/g, '<br>');
+        // Remplacer les doubles espaces
+        formatted = formatted.replace(/  +/g, ' ');
+        return formatted;
+    }
+    
     function addMessage(text, isUser, isDocResult = false, provider = null) {
         const container = document.getElementById('chatMessages');
         const div = document.createElement('div');
         div.className = `message ${isUser ? 'user' : 'bot'}`;
+        
         let info = '';
         if (!isUser && !isDocResult && provider) {
             info = `<div class="message-info">💙 Astarté · via ${provider}</div>`;
@@ -364,7 +349,10 @@
         } else if (!isUser && isDocResult) {
             info = `<div class="message-info">📚 Bibliothèque SuccessPolaris</div>`;
         }
-        div.innerHTML = `<div class="message-content">${escapeHtml(text)}${info}</div>`;
+        
+        // Formater le texte pour une lecture propre
+        const texteFormate = formaterTexte(text);
+        div.innerHTML = `<div class="message-content">${texteFormate}${info}</div>`;
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
         
@@ -405,7 +393,7 @@
     }
     
     // ============================================================
-    // BIBLIOTHÈQUE - CHARGEMENT DEPUIS L'APPS SCRIPT
+    // BIBLIOTHÈQUE
     // ============================================================
     async function chargerBibliotheque() {
         try {
@@ -418,18 +406,14 @@
             try {
                 donnees = JSON.parse(texte);
             } catch(e) {
-                console.error("Erreur JSON:", texte.substring(0, 200));
                 throw new Error("La réponse n'est pas du JSON valide");
             }
             
-            // Gérer différents formats de réponse
             if (!Array.isArray(donnees)) {
                 if (donnees.data && Array.isArray(donnees.data)) donnees = donnees.data;
                 else if (donnees.documents && Array.isArray(donnees.documents)) donnees = donnees.documents;
                 else throw new Error("Format de données inattendu");
             }
-            
-            if (donnees.length === 0) throw new Error("Aucune donnée reçue");
             
             bibliotheque = donnees.map(doc => ({
                 titre: doc.titre || doc.title || "",
@@ -442,22 +426,16 @@
             bibliothequeChargee = true;
             addSystemMessage(`✅ Bibliothèque chargée : ${bibliotheque.length} documents.`);
             return true;
-            
         } catch(erreur) {
-            console.error("Erreur chargement:", erreur);
             addSystemMessage(`⚠️ Erreur de chargement : ${erreur.message}`, true);
             return false;
         }
     }
     
-    // ============================================================
-    // RECHERCHE AVANCÉE DANS LA BIBLIOTHÈQUE
-    // ============================================================
     function rechercherDocuments(requete) {
         const requeteLower = requete.toLowerCase().trim();
         const motsRecherche = requeteLower.split(/\s+/).filter(m => m.length > 2 && !STOP_WORDS.includes(m));
         
-        // Détection de la matière
         let matiereDetectee = null;
         for (let [matiere, variantes] of Object.entries(MATIERES)) {
             for (let v of variantes) {
@@ -469,7 +447,6 @@
             if (matiereDetectee) break;
         }
         
-        // Détection du niveau
         let niveauDetecte = null;
         for (let niveau of NIVEAUX) {
             if (requeteLower.includes(niveau)) {
@@ -480,7 +457,7 @@
         
         const resultats = [];
         
-        // 1. RECHERCHE EXACTE PAR TITRE (priorité maximale)
+        // Recherche exacte par titre
         for (let doc of bibliotheque) {
             const titreLower = doc.titre.toLowerCase();
             if (titreLower === requeteLower) {
@@ -488,7 +465,7 @@
             }
         }
         
-        // 2. TITRE CONTIENT LA REQUÊTE ENTIÈRE
+        // Titre contient la requête
         if (resultats.length === 0) {
             for (let doc of bibliotheque) {
                 const titreLower = doc.titre.toLowerCase();
@@ -498,7 +475,7 @@
             }
         }
         
-        // 3. RECHERCHE PAR MOTS-CLÉS DANS LE TITRE
+        // Mots-clés dans le titre
         if (resultats.length === 0 && motsRecherche.length > 0) {
             for (let doc of bibliotheque) {
                 let score = 0;
@@ -510,36 +487,13 @@
             }
         }
         
-        // 4. RECHERCHE PAR MATIÈRE
+        // Recherche par matière
         if (resultats.length === 0 && matiereDetectee) {
             for (let doc of bibliotheque) {
                 const categorieLower = doc.categorie.toLowerCase();
                 if (categorieLower.includes(matiereDetectee)) {
                     resultats.push({ ...doc, score: 200 });
                 }
-            }
-        }
-        
-        // 5. RECHERCHE PAR NIVEAU
-        if (resultats.length === 0 && niveauDetecte) {
-            for (let doc of bibliotheque) {
-                const categorieLower = doc.categorie.toLowerCase();
-                const sousCategorieLower = doc.sousCategorie.toLowerCase();
-                if (categorieLower.includes(niveauDetecte) || sousCategorieLower.includes(niveauDetecte)) {
-                    resultats.push({ ...doc, score: 150 });
-                }
-            }
-        }
-        
-        // Filtrer par niveau si détecté (même si on a déjà des résultats)
-        if (niveauDetecte && resultats.length > 0) {
-            const resultatsFiltres = resultats.filter(doc => {
-                const categorieLower = doc.categorie.toLowerCase();
-                const sousCategorieLower = doc.sousCategorie.toLowerCase();
-                return categorieLower.includes(niveauDetecte) || sousCategorieLower.includes(niveauDetecte);
-            });
-            if (resultatsFiltres.length > 0) {
-                return { resultats: resultatsFiltres.slice(0, 5), matiereDetectee, niveauDetecte };
             }
         }
         
@@ -558,7 +512,7 @@
         } else if (niveauDetecte) {
             html += `<strong>📚 Documents de niveau ${niveauDetecte} trouvés :</strong><br><br>`;
         } else {
-            html += `<strong>📖 Documents trouvés pour "${escapeHtml(requete)}" :</strong><br><br>`;
+            html += `<strong>📖 Documents trouvés :</strong><br><br>`;
         }
         
         for (let i = 0; i < documents.length; i++) {
@@ -582,7 +536,6 @@
         for (let mot of MOTS_RECHERCHE_DOC) {
             if (requeteLower.includes(mot)) return true;
         }
-        // Vérifier si c'est une matière ou un niveau
         for (let [matiere, variantes] of Object.entries(MATIERES)) {
             for (let v of variantes) {
                 if (requeteLower.includes(v)) return true;
@@ -595,11 +548,11 @@
     }
     
     // ============================================================
-    // IA PÉDAGOGIQUE
+    // IA PÉDAGOGIQUE AVEC HISTORIQUE
     // ============================================================
     async function reponsePedagogique(question) {
         const messagesPourAPI = [
-            { role: "system", content: "Tu es Astarté, un assistant éducatif bienveillant de SuccessPolaris. Tu aides les élèves à comprendre leurs leçons avec des explications claires, simples et adaptées à leur niveau. Tu réponds en français, de manière pédagogique et chaleureuse. Tu es créée par TSEK, le Lion d'Astarté." }
+            { role: "system", content: "Tu es Astarté, un assistant éducatif bienveillant de SuccessPolaris. Tu aides les élèves à comprendre leurs leçons avec des explications claires, simples et adaptées à leur niveau. Tu réponds en français, de manière pédagogique et chaleureuse. Tu es créée par TSEK, le Lion d'Astarté. Utilise des paragraphes courts et des retours à la ligne pour une meilleure lisibilité." }
         ];
         
         const recentHistory = conversationHistory.slice(-15);
@@ -653,7 +606,6 @@
         showTyping();
         
         try {
-            // Identification d'Astarté
             if (message.toLowerCase().includes("qui es-tu") || message.toLowerCase().includes("présente-toi")) {
                 hideTyping();
                 addMessage("Je suis Astarté, l'intelligence artificielle de SuccessPolaris. Créée par TSEK, le Lion d'Astarté, pour guider les élèves vers l'excellence.", false);
@@ -664,7 +616,6 @@
                 return;
             }
             
-            // Recherche dans la bibliothèque
             if (bibliothequeChargee && bibliotheque.length > 0 && estQuestionDocument(message)) {
                 const { resultats, matiereDetectee, niveauDetecte } = rechercherDocuments(message);
                 if (resultats.length > 0) {
@@ -678,7 +629,6 @@
                 }
             }
             
-            // Réponse pédagogique
             const { content, provider } = await reponsePedagogique(message);
             hideTyping();
             addMessage(content, false, false, provider);
@@ -694,9 +644,6 @@
         }
     }
     
-    // ============================================================
-    // INITIALISATION
-    // ============================================================
     async function init() {
         await chargerBibliotheque();
         addSystemMessage("✨ Astarté est en ligne. Je connais tous les documents de la bibliothèque SuccessPolaris !");
