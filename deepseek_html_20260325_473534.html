@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>SuccessPolaris - Astarté | Assistant Éducatif</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(145deg, #0A0F1E 0%, #0C1222 50%, #0A0F1E 100%);
+            position: relative;
+        }
+
+        /* Effet de grille bleue */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Étoiles */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(2px 2px at 20px 30px, rgba(0, 255, 255, 0.4), rgba(0,0,0,0)),
+                              radial-gradient(1px 1px at 60px 120px, rgba(0, 255, 255, 0.5), rgba(0,0,0,0)),
+                              radial-gradient(3px 3px at 130px 80px, rgba(0, 255, 255, 0.3), rgba(0,0,0,0));
+            background-repeat: no-repeat;
+            background-size: 200px 200px, 300px 300px, 400px 400px;
+            pointer-events: none;
+            opacity: 0.6;
+            z-index: 0;
+        }
+
+        .chat-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 15, 30, 0.85);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        /* HEADER */
+        .chat-header {
+            background: linear-gradient(135deg, rgba(10, 15, 30, 0.95) 0%, rgba(0, 20, 40, 0.95) 100%);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.4);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            flex-shrink: 0;
+        }
+
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, #00FFFF 0%, #0099FF 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #0A0F1E;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        .logo-text h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00FFFF 0%, #0099FF 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .logo-text p { font-size: 0.65rem; color: rgba(0, 255, 255, 0.6); }
+        .ai-identity { text-align: right; }
+        .ai-name { font-size: 1.1rem; font-weight: 600; color: #00FFFF; text-shadow: 0 0 5px rgba(0,255,255,0.3); }
+        .ai-title { font-size: 0.7rem; color: rgba(0, 255, 255, 0.7); }
+
+        /* ZONE DE MESSAGES */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            animation: fadeSlideUp 0.3s ease;
+        }
+        .message.user { justify-content: flex-end; }
+        .message.bot { justify-content: flex-start; }
+        .message-content {
+            max-width: 80%;
+            padding: 12px 20px;
+            border-radius: 24px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            word-break: break-word;
+        }
+        .message.user .message-content {
+            background: linear-gradient(135deg, #00FFFF 0%, #0099FF 100%);
+            color: #0A0F1E;
+            border-bottom-right-radius: 6px;
+            font-weight: 500;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+        .message.bot .message-content {
+            background: rgba(0, 20, 40, 0.9);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-bottom-left-radius: 6px;
+        }
+        .message-info { font-size: 0.6rem; margin-top: 4px; color: #00FFFF; opacity: 0.8; }
+
+        /* RÉSULTATS DE DOCUMENTS */
+        .doc-result {
+            background: rgba(0, 255, 255, 0.05);
+            border-left: 3px solid #00FFFF;
+            padding: 12px 16px;
+            margin: 12px 0;
+            border-radius: 12px;
+        }
+        .doc-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #00FFFF;
+            margin-bottom: 6px;
+        }
+        .doc-path {
+            font-size: 0.7rem;
+            color: rgba(0, 255, 255, 0.7);
+            margin-bottom: 8px;
+            font-family: monospace;
+        }
+        .doc-desc {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 10px;
+        }
+        .doc-link {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, #00FFFF 0%, #0099FF 100%);
+            color: #0A0F1E;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .doc-link:hover { transform: scale(1.02); box-shadow: 0 2px 8px rgba(0, 255, 255, 0.4); }
+
+        /* INDICATEUR DE SAISIE */
+        .typing-indicator {
+            display: flex;
+            gap: 6px;
+            padding: 12px 20px;
+            background: rgba(0, 20, 40, 0.9);
+            border-radius: 28px;
+            width: fit-content;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #00FFFF;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease;
+            box-shadow: 0 0 3px #00FFFF;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-8px); opacity: 1; } }
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ZONE DE SAISIE */
+        .chat-input-area {
+            padding: 16px 24px;
+            background: rgba(10, 15, 30, 0.95);
+            border-top: 1px solid rgba(0, 255, 255, 0.2);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 12px 20px;
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid rgba(0, 255, 255, 0.35);
+            border-radius: 60px;
+            outline: none;
+            font-size: 0.95rem;
+            color: white;
+        }
+        .chat-input:focus { border-color: #00FFFF; background: rgba(0, 30, 50, 0.9); box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.1); }
+        .chat-input::placeholder { color: rgba(0, 255, 255, 0.4); }
+        .send-button {
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #00FFFF 0%, #0099FF 100%);
+            color: #0A0F1E;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+        }
+        .send-button:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3); }
+        .send-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* FOOTER */
+        .footer-note {
+            text-align: center;
+            font-size: 0.6rem;
+            padding: 10px;
+            color: rgba(0, 255, 255, 0.5);
+            background: rgba(10, 15, 30, 0.8);
+            border-top: 1px solid rgba(0, 255, 255, 0.15);
+            flex-shrink: 0;
+        }
+
+        /* SCROLLBAR */
+        .chat-messages::-webkit-scrollbar { width: 4px; }
+        .chat-messages::-webkit-scrollbar-track { background: rgba(0, 255, 255, 0.05); border-radius: 10px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: #00FFFF; border-radius: 10px; box-shadow: 0 0 3px #00FFFF; }
+
+        @media (max-width: 600px) {
+            .chat-header { padding: 12px 16px; }
+            .logo-icon { width: 40px; height: 40px; font-size: 20px; }
+            .logo-text h1 { font-size: 1.1rem; }
+            .ai-name { font-size: 0.9rem; }
+            .message-content { max-width: 90%; font-size: 0.85rem; padding: 10px 16px; }
+            .send-button { padding: 10px 20px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="logo-area">
+            <div class="logo-icon">SP</div>
+            <div class="logo-text">
+                <h1>SUCCESS POLARIS</h1>
+                <p>▸ ASTRA POLARIS ACADEMY ◂</p>
+            </div>
+        </div>
+        <div class="ai-identity">
+            <div class="ai-name">✦ ASTARTÉ ✦</div>
+            <div class="ai-title">Intelligence Artificielle Éducative</div>
+        </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        <div class="message bot">
+            <div class="message-content">
+                <strong>✦ Bienvenue dans l'espace SuccessPolaris ✦</strong><br><br>
+                Je suis <strong>Astarté</strong>, l'intelligence artificielle créée par <strong>TSEK, le Lion d'Astarté</strong>.<br><br>
+                Mon rôle est de vous accompagner dans votre parcours éducatif et de vous orienter vers les ressources les plus adaptées à vos besoins.<br><br>
+                📖 <em>Décrivez-moi ce que vous cherchez : un cours, un exercice, un document pour une matière ou un niveau spécifique.</em>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-input-area">
+        <input type="text" class="chat-input" id="messageInput" placeholder="Ex: 'Merlin Maths', 'mathématiques', 'cours physique terminale'" onkeypress="if(event.key === 'Enter') sendMessage()">
+        <button class="send-button" id="sendButton" onclick="sendMessage()">Envoyer</button>
+    </div>
+    <div class="footer-note">
+        SuccessPolaris · Intelligence Artificielle Astarté · Bibliothèque de 1625 documents
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // CONFIGURATION - NOUVELLE URL APPS SCRIPT
+    // ============================================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbxnDlqG4Ww6AILiofRrqAtPS9mi8AIvt--Huhme3HzXxS1YxRveaa6xgR-afYt9HRzY/exec";
+    
+    let bibliotheque = [];
+    let bibliothequeChargee = false;
+    let isProcessing = false;
+    let conversationHistory = [];
+    
+    // Matières et mots-clés pour la recherche
+    const MATIERES = {
+        "mathématiques": ["math", "maths", "algèbre", "géométrie", "calcul", "dérivée", "intégrale", "équation", "fonction", "trigonométrie", "probabilité", "statistique", "merlin"],
+        "physique": ["physique", "mécanique", "électricité", "optique", "thermodynamique", "pc", "force", "énergie", "mouvement", "cinématique", "dynamique"],
+        "chimie": ["chimie", "réaction", "molécule", "atome", "tableau périodique", "acide", "base", "oxydoréduction"],
+        "français": ["français", "littérature", "grammaire", "orthographe", "rédaction", "poésie", "dissertation", "commentaire"],
+        "histoire": ["histoire", "géographie", "hg", "civilisation", "chronologie", "guerre"],
+        "anglais": ["anglais", "english", "vocabulaire", "grammaire anglaise"],
+        "svt": ["svt", "biologie", "géologie", "sciences", "cellule", "évolution", "écosystème", "génétique"],
+        "philosophie": ["philosophie", "philo", "dissertation", "auteur", "pensée", "raison"]
+    };
+    
+    const NIVEAUX = ["terminale", "première", "seconde", "bac", "tle", "1ère", "2nde", "collège", "lycée", "supérieur", "licence", "master"];
+    
+    const MOTS_RECHERCHE_DOC = ["où", "trouver", "document", "fichier", "livre", "cours", "exercice", "pdf", "drive", "lien", "accès", "bibliothèque", "ressource", "merlin", "aurore"];
+    const STOP_WORDS = ["je", "tu", "il", "elle", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "pour", "par", "sur", "dans", "avec", "sans", "ou", "et", "donc", "or", "ni", "car", "veux", "cherche", "moi", "toi"];
+    
+    // ============================================================
+    // APIS PÉDAGOGIQUES (Groq + Fireworks)
+    // ============================================================
+    const PROVIDERS = [
+        { name: "Groq", url: "https://api.groq.com/openai/v1/chat/completions", model: "llama-3.3-70b-versatile", key: "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" },
+        { name: "Fireworks", url: "https://api.fireworks.ai/inference/v1/chat/completions", model: "accounts/fireworks/models/llama-v3p3-70b-instruct", key: "fw_Rq3HAAzaQ39PFVSMRykAnN" }
+    ];
+    
+    // ============================================================
+    // FONCTIONS UI
+    // ============================================================
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m);
+    }
+    
+    function addMessage(text, isUser, isDocResult = false, provider = null) {
+        const container = document.getElementById('chatMessages');
+        const div = document.createElement('div');
+        div.className = `message ${isUser ? 'user' : 'bot'}`;
+        let info = '';
+        if (!isUser && !isDocResult && provider) {
+            info = `<div class="message-info">💙 Astarté · via ${provider}</div>`;
+        } else if (!isUser && !isDocResult) {
+            info = `<div class="message-info">💙 Astarté</div>`;
+        } else if (!isUser && isDocResult) {
+            info = `<div class="message-info">📚 Bibliothèque SuccessPolaris</div>`;
+        }
+        div.innerHTML = `<div class="message-content">${escapeHtml(text)}${info}</div>`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+        
+        if (!isUser && !isDocResult) {
+            conversationHistory.push({ role: "assistant", content: text });
+        }
+    }
+    
+    function addUserMessage(text) {
+        addMessage(text, true);
+        conversationHistory.push({ role: "user", content: text });
+    }
+    
+    function addSystemMessage(texte, isError = false) {
+        const container = document.getElementById('chatMessages');
+        const div = document.createElement('div');
+        div.className = 'message bot';
+        div.innerHTML = `<div class="message-content"><em>${isError ? '⚠️' : '💙'} ${escapeHtml(texte)}</em></div>`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    let typingDiv = null;
+    function showTyping() {
+        if (typingDiv) hideTyping();
+        const container = document.getElementById('chatMessages');
+        typingDiv = document.createElement('div');
+        typingDiv.className = 'message bot';
+        typingDiv.id = 'typingIndicator';
+        typingDiv.innerHTML = `<div class="typing-indicator"><span></span><span></span><span></span></div>`;
+        container.appendChild(typingDiv);
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    function hideTyping() {
+        if (typingDiv && typingDiv.parentNode) typingDiv.parentNode.removeChild(typingDiv);
+        typingDiv = null;
+    }
+    
+    // ============================================================
+    // BIBLIOTHÈQUE - CHARGEMENT DEPUIS L'APPS SCRIPT
+    // ============================================================
+    async function chargerBibliotheque() {
+        try {
+            addSystemMessage("📡 Connexion à la bibliothèque SuccessPolaris...");
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const texte = await response.text();
+            let donnees;
+            try {
+                donnees = JSON.parse(texte);
+            } catch(e) {
+                console.error("Erreur JSON:", texte.substring(0, 200));
+                throw new Error("La réponse n'est pas du JSON valide");
+            }
+            
+            // Gérer différents formats de réponse
+            if (!Array.isArray(donnees)) {
+                if (donnees.data && Array.isArray(donnees.data)) donnees = donnees.data;
+                else if (donnees.documents && Array.isArray(donnees.documents)) donnees = donnees.documents;
+                else throw new Error("Format de données inattendu");
+            }
+            
+            if (donnees.length === 0) throw new Error("Aucune donnée reçue");
+            
+            bibliotheque = donnees.map(doc => ({
+                titre: doc.titre || doc.title || "",
+                lien: doc.lien || doc.link || "",
+                categorie: doc.categorie || doc.category || "",
+                sousCategorie: doc.sousCategorie || doc.subcategory || "",
+                description: doc.description || ""
+            }));
+            
+            bibliothequeChargee = true;
+            addSystemMessage(`✅ Bibliothèque chargée : ${bibliotheque.length} documents.`);
+            return true;
+            
+        } catch(erreur) {
+            console.error("Erreur chargement:", erreur);
+            addSystemMessage(`⚠️ Erreur de chargement : ${erreur.message}`, true);
+            return false;
+        }
+    }
+    
+    // ============================================================
+    // RECHERCHE AVANCÉE DANS LA BIBLIOTHÈQUE
+    // ============================================================
+    function rechercherDocuments(requete) {
+        const requeteLower = requete.toLowerCase().trim();
+        const motsRecherche = requeteLower.split(/\s+/).filter(m => m.length > 2 && !STOP_WORDS.includes(m));
+        
+        // Détection de la matière
+        let matiereDetectee = null;
+        for (let [matiere, variantes] of Object.entries(MATIERES)) {
+            for (let v of variantes) {
+                if (requeteLower.includes(v)) {
+                    matiereDetectee = matiere;
+                    break;
+                }
+            }
+            if (matiereDetectee) break;
+        }
+        
+        // Détection du niveau
+        let niveauDetecte = null;
+        for (let niveau of NIVEAUX) {
+            if (requeteLower.includes(niveau)) {
+                niveauDetecte = niveau;
+                break;
+            }
+        }
+        
+        const resultats = [];
+        
+        // 1. RECHERCHE EXACTE PAR TITRE (priorité maximale)
+        for (let doc of bibliotheque) {
+            const titreLower = doc.titre.toLowerCase();
+            if (titreLower === requeteLower) {
+                resultats.push({ ...doc, score: 10000 });
+            }
+        }
+        
+        // 2. TITRE CONTIENT LA REQUÊTE ENTIÈRE
+        if (resultats.length === 0) {
+            for (let doc of bibliotheque) {
+                const titreLower = doc.titre.toLowerCase();
+                if (titreLower.includes(requeteLower)) {
+                    resultats.push({ ...doc, score: 5000 });
+                }
+            }
+        }
+        
+        // 3. RECHERCHE PAR MOTS-CLÉS DANS LE TITRE
+        if (resultats.length === 0 && motsRecherche.length > 0) {
+            for (let doc of bibliotheque) {
+                let score = 0;
+                const titreLower = doc.titre.toLowerCase();
+                for (let mot of motsRecherche) {
+                    if (titreLower.includes(mot)) score += 50;
+                }
+                if (score > 0) resultats.push({ ...doc, score });
+            }
+        }
+        
+        // 4. RECHERCHE PAR MATIÈRE
+        if (resultats.length === 0 && matiereDetectee) {
+            for (let doc of bibliotheque) {
+                const categorieLower = doc.categorie.toLowerCase();
+                if (categorieLower.includes(matiereDetectee)) {
+                    resultats.push({ ...doc, score: 200 });
+                }
+            }
+        }
+        
+        // 5. RECHERCHE PAR NIVEAU
+        if (resultats.length === 0 && niveauDetecte) {
+            for (let doc of bibliotheque) {
+                const categorieLower = doc.categorie.toLowerCase();
+                const sousCategorieLower = doc.sousCategorie.toLowerCase();
+                if (categorieLower.includes(niveauDetecte) || sousCategorieLower.includes(niveauDetecte)) {
+                    resultats.push({ ...doc, score: 150 });
+                }
+            }
+        }
+        
+        // Filtrer par niveau si détecté (même si on a déjà des résultats)
+        if (niveauDetecte && resultats.length > 0) {
+            const resultatsFiltres = resultats.filter(doc => {
+                const categorieLower = doc.categorie.toLowerCase();
+                const sousCategorieLower = doc.sousCategorie.toLowerCase();
+                return categorieLower.includes(niveauDetecte) || sousCategorieLower.includes(niveauDetecte);
+            });
+            if (resultatsFiltres.length > 0) {
+                return { resultats: resultatsFiltres.slice(0, 5), matiereDetectee, niveauDetecte };
+            }
+        }
+        
+        resultats.sort((a, b) => b.score - a.score);
+        return { resultats: resultats.slice(0, 5), matiereDetectee, niveauDetecte };
+    }
+    
+    function afficherResultatsDocuments(documents, requete, matiereDetectee, niveauDetecte) {
+        if (documents.length === 0) return false;
+        
+        let html = '';
+        if (matiereDetectee && niveauDetecte) {
+            html += `<strong>📚 Documents de ${matiereDetectee} (${niveauDetecte}) trouvés :</strong><br><br>`;
+        } else if (matiereDetectee) {
+            html += `<strong>📚 Documents de ${matiereDetectee} trouvés :</strong><br><br>`;
+        } else if (niveauDetecte) {
+            html += `<strong>📚 Documents de niveau ${niveauDetecte} trouvés :</strong><br><br>`;
+        } else {
+            html += `<strong>📖 Documents trouvés pour "${escapeHtml(requete)}" :</strong><br><br>`;
+        }
+        
+        for (let i = 0; i < documents.length; i++) {
+            const doc = documents[i];
+            html += `
+                <div class="doc-result">
+                    <div class="doc-title">📄 ${i+1}. ${escapeHtml(doc.titre)}</div>
+                    <div class="doc-path">📂 ${escapeHtml(doc.categorie)} › ${escapeHtml(doc.sousCategorie)}</div>
+                    ${doc.description ? `<div class="doc-desc">📝 ${escapeHtml(doc.description)}</div>` : ''}
+                    ${doc.lien && doc.lien.startsWith('http') ? `<a href="${escapeHtml(doc.lien)}" target="_blank" class="doc-link">🔗 Accéder au document</a>` : '<span style="color:#ff8888;">⚠️ Lien non disponible</span>'}
+                </div>
+            `;
+        }
+        
+        addMessage(html, false, true);
+        return true;
+    }
+    
+    function estQuestionDocument(requete) {
+        const requeteLower = requete.toLowerCase();
+        for (let mot of MOTS_RECHERCHE_DOC) {
+            if (requeteLower.includes(mot)) return true;
+        }
+        // Vérifier si c'est une matière ou un niveau
+        for (let [matiere, variantes] of Object.entries(MATIERES)) {
+            for (let v of variantes) {
+                if (requeteLower.includes(v)) return true;
+            }
+        }
+        for (let niveau of NIVEAUX) {
+            if (requeteLower.includes(niveau)) return true;
+        }
+        return false;
+    }
+    
+    // ============================================================
+    // IA PÉDAGOGIQUE
+    // ============================================================
+    async function reponsePedagogique(question) {
+        const messagesPourAPI = [
+            { role: "system", content: "Tu es Astarté, un assistant éducatif bienveillant de SuccessPolaris. Tu aides les élèves à comprendre leurs leçons avec des explications claires, simples et adaptées à leur niveau. Tu réponds en français, de manière pédagogique et chaleureuse. Tu es créée par TSEK, le Lion d'Astarté." }
+        ];
+        
+        const recentHistory = conversationHistory.slice(-15);
+        for (let msg of recentHistory) {
+            messagesPourAPI.push({ role: msg.role, content: msg.content });
+        }
+        messagesPourAPI.push({ role: "user", content: question });
+        
+        for (let i = 0; i < PROVIDERS.length; i++) {
+            const p = PROVIDERS[i];
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                const payload = {
+                    model: p.model,
+                    messages: messagesPourAPI,
+                    temperature: 0.7,
+                    max_tokens: 800
+                };
+                const response = await fetch(p.url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${p.key}` },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                if (!response.ok) continue;
+                const data = await response.json();
+                const content = data.choices?.[0]?.message?.content;
+                if (content) return { content, provider: p.name };
+            } catch(e) { continue; }
+        }
+        return { content: "Je rencontre des difficultés techniques. Veuillez reformuler votre question.", provider: null };
+    }
+    
+    // ============================================================
+    // ENVOI DE MESSAGE
+    // ============================================================
+    async function sendMessage() {
+        if (isProcessing) return;
+        const input = document.getElementById('messageInput');
+        const btn = document.getElementById('sendButton');
+        const message = input.value.trim();
+        if (!message) return;
+        
+        isProcessing = true;
+        input.disabled = true;
+        btn.disabled = true;
+        addUserMessage(message);
+        input.value = '';
+        showTyping();
+        
+        try {
+            // Identification d'Astarté
+            if (message.toLowerCase().includes("qui es-tu") || message.toLowerCase().includes("présente-toi")) {
+                hideTyping();
+                addMessage("Je suis Astarté, l'intelligence artificielle de SuccessPolaris. Créée par TSEK, le Lion d'Astarté, pour guider les élèves vers l'excellence.", false);
+                isProcessing = false;
+                input.disabled = false;
+                btn.disabled = false;
+                input.focus();
+                return;
+            }
+            
+            // Recherche dans la bibliothèque
+            if (bibliothequeChargee && bibliotheque.length > 0 && estQuestionDocument(message)) {
+                const { resultats, matiereDetectee, niveauDetecte } = rechercherDocuments(message);
+                if (resultats.length > 0) {
+                    hideTyping();
+                    afficherResultatsDocuments(resultats, message, matiereDetectee, niveauDetecte);
+                    isProcessing = false;
+                    input.disabled = false;
+                    btn.disabled = false;
+                    input.focus();
+                    return;
+                }
+            }
+            
+            // Réponse pédagogique
+            const { content, provider } = await reponsePedagogique(message);
+            hideTyping();
+            addMessage(content, false, false, provider);
+            
+        } catch (err) {
+            hideTyping();
+            addMessage("Je n'ai pas pu traiter votre demande. Veuillez reformuler.", false);
+        } finally {
+            isProcessing = false;
+            input.disabled = false;
+            btn.disabled = false;
+            input.focus();
+        }
+    }
+    
+    // ============================================================
+    // INITIALISATION
+    // ============================================================
+    async function init() {
+        await chargerBibliotheque();
+        addSystemMessage("✨ Astarté est en ligne. Je connais tous les documents de la bibliothèque SuccessPolaris !");
+        document.getElementById('messageInput')?.focus();
+    }
+    
+    init();
+    window.sendMessage = sendMessage;
+</script>
+</body>
+</html>
