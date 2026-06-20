@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>SuccessPolaris - Astarté</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body,#root{width:100%;height:100%;overflow:hidden}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;background:#0A0F1E}
+.chat-container{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,15,30,0.85);backdrop-filter:blur(20px);display:flex;flex-direction:column;overflow:hidden;z-index:2}
+.chat-header{background:linear-gradient(135deg,rgba(10,15,30,0.95),rgba(0,20,40,0.95));border-bottom:1px solid rgba(0,255,255,0.4);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;flex-shrink:0}
+.logo-area{display:flex;align-items:center;gap:12px}
+.logo-icon{width:48px;height:48px;background:linear-gradient(135deg,#00FFFF,#0099FF);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#0A0F1E;box-shadow:0 0 20px rgba(0,255,255,0.3)}
+.logo-text h1{font-size:1.4rem;font-weight:700;background:linear-gradient(135deg,#00FFFF,#0099FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo-text p{font-size:0.65rem;color:rgba(0,255,255,0.6)}
+.ai-name{font-size:1.1rem;font-weight:600;color:#00FFFF;text-shadow:0 0 5px rgba(0,255,255,0.3)}
+.ai-title{font-size:0.7rem;color:rgba(0,255,255,0.7)}
+.chat-messages{flex:1;overflow-y:auto;padding:24px;scroll-behavior:smooth}
+.chat-messages::-webkit-scrollbar{width:4px}
+.chat-messages::-webkit-scrollbar-track{background:rgba(0,255,255,0.05);border-radius:10px}
+.chat-messages::-webkit-scrollbar-thumb{background:#00FFFF;border-radius:10px;box-shadow:0 0 3px #00FFFF}
+.message{margin-bottom:20px;display:flex;animation:fadeSlideUp 0.3s ease}
+.message.user{justify-content:flex-end}
+.message.bot{justify-content:flex-start}
+.message-content{max-width:80%;padding:12px 20px;border-radius:24px;line-height:1.5;font-size:0.95rem;word-break:break-word;white-space:pre-wrap}
+.message.user .message-content{background:linear-gradient(135deg,#00FFFF,#0099FF);color:#0A0F1E;border-bottom-right-radius:6px;font-weight:500;box-shadow:0 0 10px rgba(0,255,255,0.2)}
+.message.bot .message-content{background:rgba(0,20,40,0.9);color:rgba(255,255,255,0.9);border:1px solid rgba(0,255,255,0.3);border-bottom-left-radius:6px}
+.message-info{font-size:0.6rem;margin-top:4px;color:#00FFFF;opacity:0.8}
+.typing-indicator{display:flex;gap:6px;padding:12px 20px;background:rgba(0,20,40,0.9);border-radius:28px;width:fit-content;border:1px solid rgba(0,255,255,0.3)}
+.typing-indicator span{width:8px;height:8px;background:#00FFFF;border-radius:50%;animation:bounce 1.4s infinite ease;box-shadow:0 0 3px #00FFFF}
+.typing-indicator span:nth-child(2){animation-delay:0.2s}
+.typing-indicator span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:0.5}30%{transform:translateY(-8px);opacity:1}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.chat-input-area{padding:16px 24px;background:rgba(10,15,30,0.95);border-top:1px solid rgba(0,255,255,0.2);display:flex;gap:12px;align-items:center;flex-shrink:0}
+.chat-input{flex:1;padding:12px 20px;background:rgba(0,20,40,0.8);border:1px solid rgba(0,255,255,0.35);border-radius:60px;outline:none;font-size:0.95rem;color:white}
+.chat-input:focus{border-color:#00FFFF;background:rgba(0,30,50,0.9);box-shadow:0 0 0 3px rgba(0,255,255,0.1)}
+.chat-input::placeholder{color:rgba(0,255,255,0.4)}
+.send-button{padding:12px 28px;background:linear-gradient(135deg,#00FFFF,#0099FF);color:#0A0F1E;border:none;border-radius:60px;cursor:pointer;font-weight:700;font-size:0.9rem;box-shadow:0 0 5px rgba(0,255,255,0.3)}
+.send-button:hover:not(:disabled){transform:scale(1.02);box-shadow:0 4px 15px rgba(0,255,255,0.3)}
+.send-button:disabled{opacity:0.5;cursor:not-allowed}
+.footer-note{text-align:center;font-size:0.6rem;padding:10px;color:rgba(0,255,255,0.5);background:rgba(10,15,30,0.8);border-top:1px solid rgba(0,255,255,0.15);flex-shrink:0}
+.doc-result{background:rgba(0,255,255,0.05);border-left:3px solid #00FFFF;padding:12px 16px;margin:12px 0;border-radius:12px}
+.doc-title{font-weight:700;font-size:0.95rem;color:#00FFFF;margin-bottom:6px}
+.doc-path{font-size:0.7rem;color:rgba(0,255,255,0.7);margin-bottom:8px;font-family:monospace}
+.doc-desc{font-size:0.8rem;color:rgba(255,255,255,0.8);margin-bottom:10px}
+.doc-link{display:inline-block;margin-top:6px;padding:6px 16px;background:linear-gradient(135deg,#00FFFF,#0099FF);color:#0A0F1E;text-decoration:none;border-radius:30px;font-size:0.7rem;font-weight:600}
+.doc-link:hover{transform:scale(1.02);box-shadow:0 2px 8px rgba(0,255,255,0.4)}
+@media(max-width:600px){.chat-header{padding:12px 16px}.logo-icon{width:40px;height:40px;font-size:20px}.logo-text h1{font-size:1.1rem}.ai-name{font-size:0.9rem}.message-content{max-width:90%;font-size:0.85rem;padding:10px 16px}.send-button{padding:10px 20px;font-size:0.8rem}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_P33wmcLnlxrs8aFNRIA14BpidO6-ghWBin_OcWvflbgtsZ7Ai9ERknkBEe2giZ5V/exec";
+
+function getUserId() {
+  let userId = localStorage.getItem("astarte_user_id");
+  if (!userId) {
+    userId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem("astarte_user_id", userId);
+  }
+  return userId;
+}
+
+function App() {
+  const [messages, setMessages] = useState([{
+    text: "✦ Bienvenue dans l'espace SuccessPolaris ✦\n\nJe suis Astarté, l'intelligence artificielle créée par TSEK, le Lion d'Astarté.\n\n📚 Je connais tous les documents de la bibliothèque.\n\n💬 Posez une question !",
+    isUser: false
+  }]);
+  const [input, setInput] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [currentProvider, setCurrentProvider] = useState(null);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSend = useCallback(async () => {
+    const text = input.trim();
+    if (isProcessing || !text) return;
+
+    setMessages(prev => [...prev, { text, isUser: true }]);
+    setInput("");
+    setIsProcessing(true);
+    setMessages(prev => [...prev, { text: "...", isUser: false, isTyping: true }]);
+
+    try {
+      const userId = getUserId();
+      const response = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, userId: userId })
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+
+      if (data.error) throw new Error(data.error);
+
+      setMessages(prev => {
+        const updated = [...prev];
+        updated.pop();
+        return [...updated, { text: data.reply, isUser: false, provider: data.provider, model: data.model }];
+      });
+      setCurrentProvider(data.provider);
+    } catch (error) {
+      setMessages(prev => {
+        const updated = [...prev];
+        updated.pop();
+        return [...updated, { text: "Désolé, une erreur est survenue: " + error.message, isUser: false }];
+      });
+    }
+    setIsProcessing(false);
+  }, [input, isProcessing]);
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') handleSend();
+  };
+
+  return (
+    <div className="chat-container">
+      <div className="chat-header">
+        <div className="logo-area">
+          <div className="logo-icon">SP</div>
+          <div className="logo-text">
+            <h1>SUCCESS POLARIS</h1>
+            <p>▸ ASTRA POLARIS ACADEMY ◂</p>
+          </div>
+        </div>
+        <div>
+          <div className="ai-name">✦ ASTARTÉ ✦</div>
+          <div className="ai-title">IA Éducative {currentProvider ? `· ${currentProvider}` : ''}</div>
+        </div>
+      </div>
+      <div className="chat-messages">
+        {messages.map((msg, i) => (
+          <div key={i} className={`message ${msg.isUser ? 'user' : 'bot'}`}>
+            {msg.isTyping ? (
+              <div className="typing-indicator"><span></span><span></span><span></span></div>
+            ) : (
+              <div>
+                <div className="message-content">{msg.text.split('\n').map((line,j) => <span key={j}>{line}<br/></span>)}</div>
+                {!msg.isUser && msg.provider && <div className="message-info">via {msg.provider}{msg.model ? ` · ${msg.model}` : ''}</div>}
+              </div>
+            )}
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+      <div className="chat-input-area">
+        <input type="text" className="chat-input" placeholder="Posez une question à Astarté..." value={input} onChange={e => setInput(e.target.value)} onKeyPress={handleKeyPress} disabled={isProcessing} />
+        <button className="send-button" onClick={handleSend} disabled={isProcessing || !input.trim()}>Envoyer</button>
+      </div>
+      <div className="footer-note">SuccessPolaris · Intelligence Artificielle Astarté</div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
